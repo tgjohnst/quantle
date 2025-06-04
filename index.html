@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Wordle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none; /* Prevents pull-to-refresh on mobile */
+        }
+        .tile {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #d1d5db; /* gray-300 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 2px;
+            border-radius: 0.375rem; /* rounded-md */
+            transition: transform 0.2s ease-in-out, background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .potential-tile {
+            width: 60px; /* Match tile width */
+            min-height: 50px; /* Allow for multiple lines, adjusted for 4 letters */
+            border: 2px solid #9ca3af; /* gray-400 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.7rem; /* Slightly smaller for 4 letters if needed */
+            font-weight: normal;
+            text-transform: uppercase;
+            margin: 2px;
+            padding: 4px;
+            border-radius: 0.375rem; /* rounded-md */
+            background-color: #f3f4f6; /* gray-100 */
+            line-height: 1.1; /* Adjusted for tighter packing */
+            overflow-wrap: break-word;
+            word-break: break-all;
+        }
+        .potential-tile.collapsed {
+            font-size: 1.5rem; /* Larger for single letter */
+            font-weight: bold;
+        }
+        .potential-tile.correct-implicit {
+             background-color: #d1fae5; /* green-100 */
+             border-color: #10b981; /* green-500 */
+        }
+
+
+        .key {
+            height: 50px;
+            min-width: 30px; /* For smaller keys like 'I' */
+            padding: 0 10px;
+            border: 1px solid #9ca3af; /* gray-400 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 0.375rem; /* rounded-md */
+            cursor: pointer;
+            background-color: #e5e7eb; /* gray-200 */
+            transition: background-color 0.2s ease;
+        }
+        .key:hover {
+            background-color: #d1d5db; /* gray-300 */
+        }
+        .key.wide {
+            min-width: 60px;
+        }
+
+        .tile.green, .key.green { background-color: #10b981; border-color: #059669; color: white; } /* green-500, green-700 */
+        .tile.yellow, .key.yellow { background-color: #f59e0b; border-color: #d97706; color: white; } /* amber-500, amber-700 */
+        .tile.grey, .key.grey { background-color: #6b7280; border-color: #4b5563; color: white; } /* gray-500, gray-600 */
+
+        .tile.pop {
+            animation: pop 0.1s ease-in-out;
+        }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .tile.flip {
+            animation: flip 0.5s ease forwards;
+        }
+        @keyframes flip {
+            0% { transform: rotateX(0deg); }
+            50% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0deg); }
+        }
+        #toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none; /* So it doesn't interfere with clicks */
+        }
+        #toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-2 sm:p-4">
+
+    <div id="toast"></div>
+
+    <header class="mb-4 sm:mb-6 text-center">
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">Quantum Wordle</h1>
+        <p class="text-sm text-gray-600">Uncover the word by collapsing quantum states!</p>
+    </header>
+
+    <!-- Potential State Display -->
+    <div id="potential-state-display" class="flex justify-center mb-3 sm:mb-4">
+        <!-- Potential tiles will be generated here -->
+    </div>
+
+    <!-- Guess Grid -->
+    <div id="guess-grid" class="grid grid-rows-6 gap-1 mb-4 sm:mb-6">
+        <!-- Grid tiles will be generated here -->
+    </div>
+
+    <!-- Keyboard -->
+    <div id="keyboard" class="flex flex-col items-center space-y-1 sm:space-y-2">
+        <!-- Keyboard rows will be generated here -->
+    </div>
+
+    <button id="new-game-button" class="mt-6 px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 ease-in-out">New Game</button>
+
+    <script>
+        const WORDS = ["APPLE", "BEACH", "CHAIR", "DREAM", "EAGLE", "FANCY", "GHOST", "HEART", "INPUT", "JOLLY", "KNOCK", "LEMON", "MANGO", "NIGHT", "OCEAN", "PAINT", "QUEEN", "RIVER", "SNAKE", "TABLE", "UNITY", "VOICE", "WATCH", "XENON", "YACHT", "ZEBRA", "BRAIN", "FLUTE", "GRAPE", "HOUSE", "IGLOO", "JELLY", "KOALA", "LIGHT", "MOUSE", "NURSE", "OLIVE", "PANDA", "QUILT", "ROBOT", "SAUCE", "TIGER", "UNCLE", "VIOLET", "WHALE", "YUMMY", "ZIPPER"];
+        const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
+        const WORD_LENGTH = 5;
+        const MAX_GUESSES = 6;
+        // --- MODIFIED LINE ---
+        const POTENTIALS_PER_SLOT = 4; // The actual letter + (POTENTIALS_PER_SLOT - 1) others
+
+        let targetWord = '';
+        let globalPotentials = []; // Array of arrays, e.g., [['A','B','C','D'], ['E','F','G','H'], ...]
+        let guesses = []; // Array of guess objects: { word: "HELLO", feedback: ['g','y','n','n','n'] }
+        let currentRow = 0;
+        let currentCol = 0;
+        let isGameOver = false;
+        let keyboardKeyStates = {}; // To store colors for keyboard keys
+
+        const guessGridElement = document.getElementById('guess-grid');
+        const potentialStateDisplayElement = document.getElementById('potential-state-display');
+        const keyboardElement = document.getElementById('keyboard');
+        const newGameButton = document.getElementById('new-game-button');
+        const toastElement = document.getElementById('toast');
+
+        function showToast(message, duration = 3000) {
+            toastElement.textContent = message;
+            toastElement.classList.add('show');
+            setTimeout(() => {
+                toastElement.classList.remove('show');
+            }, duration);
+        }
+
+        function initializeGame() {
+            targetWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+            console.log("Target Word (for debugging):", targetWord);
+
+            globalPotentials = [];
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                const correctLetter = targetWord[i];
+                let slotPotentials = [correctLetter];
+                let tempAlphabet = ALPHABET.filter(l => l !== correctLetter);
+                
+                // Shuffle tempAlphabet to get random other potentials
+                for (let j = tempAlphabet.length - 1; j > 0; j--) {
+                    const k = Math.floor(Math.random() * (j + 1));
+                    [tempAlphabet[j], tempAlphabet[k]] = [tempAlphabet[k], tempAlphabet[j]];
+                }
+
+                // Ensure we have enough unique letters for the potentials
+                for (let j = 0; j < POTENTIALS_PER_SLOT - 1 && j < tempAlphabet.length; j++) {
+                    slotPotentials.push(tempAlphabet[j]);
+                }
+                
+                // Shuffle the final slot potentials so the correct letter isn't always first
+                for (let j = slotPotentials.length - 1; j > 0; j--) {
+                    const k = Math.floor(Math.random() * (j + 1));
+                    [slotPotentials[j], slotPotentials[k]] = [slotPotentials[k], slotPotentials[j]];
+                }
+                globalPotentials.push(slotPotentials);
+            }
+
+            guesses = [];
+            currentRow = 0;
+            currentCol = 0;
+            isGameOver = false;
+            keyboardKeyStates = {};
+
+            renderPotentialStateDisplay();
+            renderGuessGrid();
+            renderKeyboard();
+            newGameButton.disabled = false;
+        }
+
+        function renderPotentialStateDisplay() {
+            potentialStateDisplayElement.innerHTML = '';
+            globalPotentials.forEach((potentials, index) => {
+                const tile = document.createElement('div');
+                tile.classList.add('potential-tile');
+                // Join with a smaller separator if needed for space, e.g., potentials.join('/')
+                tile.textContent = potentials.join(','); 
+                if (potentials.length === 1) {
+                    tile.classList.add('collapsed');
+                    // Check if this implicitly collapsed slot is the correct letter
+                    if (potentials[0] === targetWord[index]) {
+                         tile.classList.add('correct-implicit');
+                    }
+                }
+                potentialStateDisplayElement.appendChild(tile);
+            });
+        }
+
+        function renderGuessGrid() {
+            guessGridElement.innerHTML = '';
+            for (let i = 0; i < MAX_GUESSES; i++) {
+                const rowElement = document.createElement('div');
+                rowElement.classList.add('flex', 'justify-center');
+                for (let j = 0; j < WORD_LENGTH; j++) {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+                    tile.id = `tile-${i}-${j}`;
+                    
+                    const guessData = guesses[i];
+                    if (guessData && guessData.word[j]) {
+                        tile.textContent = guessData.word[j];
+                        if (guessData.feedback) { // Apply feedback colors after animation
+                           const color = guessData.feedback[j];
+                           if (color === 'green') tile.classList.add('green');
+                           else if (color === 'yellow') tile.classList.add('yellow');
+                           else if (color === 'grey') tile.classList.add('grey');
+                        }
+                    }
+                    rowElement.appendChild(tile);
+                }
+                guessGridElement.appendChild(rowElement);
+            }
+        }
+        
+        function renderKeyboard() {
+            keyboardElement.innerHTML = '';
+            const layout = [
+                "QWERTYUIOP",
+                "ASDFGHJKL",
+                "ZXCVBNM"
+            ];
+
+            layout.forEach((row, rowIndex) => {
+                const rowElement = document.createElement('div');
+                rowElement.classList.add('flex', 'justify-center', 'space-x-1', 'sm:space-x-2');
+                if (rowIndex === layout.length - 1) { // Last row for Enter and Backspace
+                    const enterKey = createKey('ENTER', true);
+                    rowElement.appendChild(enterKey);
+                }
+                row.split('').forEach(char => {
+                    rowElement.appendChild(createKey(char));
+                });
+                if (rowIndex === layout.length - 1) {
+                    const backspaceKey = createKey('⌫', true); // Or 'DEL' or icon
+                    rowElement.appendChild(backspaceKey);
+                }
+                keyboardElement.appendChild(rowElement);
+            });
+            updateKeyboardColors();
+        }
+
+        function createKey(char, isWide = false) {
+            const keyElement = document.createElement('button');
+            keyElement.classList.add('key');
+            if (isWide) keyElement.classList.add('wide');
+            keyElement.textContent = char;
+            keyElement.dataset.key = char;
+            keyElement.addEventListener('click', () => handleKeyPress(char));
+            return keyElement;
+        }
+        
+        function updateKeyboardColors() {
+            document.querySelectorAll('.key').forEach(keyEl => {
+                const char = keyEl.dataset.key;
+                if (keyboardKeyStates[char]) {
+                    keyEl.classList.remove('green', 'yellow', 'grey'); // Clear previous
+                    keyEl.classList.add(keyboardKeyStates[char]);
+                } else {
+                    // Ensure keys are reset if no state (e.g., new game)
+                    keyEl.classList.remove('green', 'yellow', 'grey');
+                }
+            });
+        }
+
+        function handleKeyPress(key) {
+            if (isGameOver) return;
+
+            if (key === 'ENTER') {
+                if (currentCol === WORD_LENGTH) {
+                    submitGuess();
+                } else {
+                    showToast("Not enough letters");
+                }
+            } else if (key === '⌫' || key === 'BACKSPACE') {
+                if (currentCol > 0) {
+                    currentCol--;
+                    const tile = document.getElementById(`tile-${currentRow}-${currentCol}`);
+                    tile.textContent = '';
+                    tile.classList.remove('pop');
+                }
+            } else if (ALPHABET.includes(key.toUpperCase())) {
+                if (currentCol < WORD_LENGTH) {
+                    const tile = document.getElementById(`tile-${currentRow}-${currentCol}`);
+                    tile.textContent = key.toUpperCase();
+                    tile.classList.add('pop'); // Add pop animation
+                    setTimeout(() => tile.classList.remove('pop'), 100); // Remove after animation
+                    currentCol++;
+                }
+            }
+        }
+
+        function getCurrentGuessWord() {
+            let word = "";
+            for (let j = 0; j < WORD_LENGTH; j++) {
+                const tile = document.getElementById(`tile-${currentRow}-${j}`);
+                word += tile.textContent;
+            }
+            return word;
+        }
+
+        async function submitGuess() {
+            const guessedWord = getCurrentGuessWord();
+            if (guessedWord.length !== WORD_LENGTH) return;
+
+            const { feedback, newPotentials } = calculateFeedbackAndUpdatePotentials(guessedWord, targetWord, globalPotentials);
+            globalPotentials = newPotentials; 
+
+            guesses[currentRow] = { word: guessedWord, feedback: feedback };
+            
+            const currentRowTiles = guessGridElement.children[currentRow].children;
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                const tile = currentRowTiles[i];
+                tile.classList.add('flip'); 
+                await new Promise(resolve => setTimeout(resolve, 120 * i + (i === 0 ? 0 : 50) )); // Stagger flip slightly more
+                
+                const color = feedback[i];
+                if (color === 'green') tile.classList.add('green');
+                else if (color === 'yellow') tile.classList.add('yellow');
+                else if (color === 'grey') tile.classList.add('grey');
+
+                const letter = guessedWord[i];
+                const currentColor = keyboardKeyStates[letter];
+                if (!currentColor || 
+                    (currentColor === 'grey' && (color === 'yellow' || color === 'green')) ||
+                    (currentColor === 'yellow' && color === 'green')) {
+                    keyboardKeyStates[letter] = color;
+                }
+            }
+            // Ensure all flips complete before proceeding
+            await new Promise(resolve => setTimeout(resolve, 120 * WORD_LENGTH + 200));
+
+
+            renderPotentialStateDisplay(); 
+            updateKeyboardColors();
+
+            checkWinLoss(guessedWord, feedback);
+
+            if (!isGameOver) {
+                currentRow++;
+                currentCol = 0;
+                if (currentRow === MAX_GUESSES) {
+                    isGameOver = true;
+                    showToast(`Game Over! The word was ${targetWord}.`, 5000);
+                    newGameButton.disabled = false;
+                }
+            } else {
+                 newGameButton.disabled = false;
+            }
+        }
+
+        function calculateFeedbackAndUpdatePotentials(guess, target, currentPotentials) {
+            let targetLetters = target.split(''); // mutable copy of target for marking used letters
+            let guessLetters = guess.split(''); // mutable copy of guess for marking processed letters
+            let feedback = Array(WORD_LENGTH).fill('grey'); 
+            let newPotentialsCopy = JSON.parse(JSON.stringify(currentPotentials));
+
+            // First pass: Greens
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                if (guessLetters[i] === targetLetters[i]) {
+                    feedback[i] = 'green';
+                    newPotentialsCopy[i] = [targetLetters[i]]; // Collapse this potential slot
+                    targetLetters[i] = null; // Mark target letter as used
+                    guessLetters[i] = '#'; // Mark guess letter as processed
+                }
+            }
+
+            // Second pass: Yellows
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                if (guessLetters[i] !== '#') { // If not already green
+                    const targetIndex = targetLetters.indexOf(guessLetters[i]);
+                    if (targetIndex !== -1) { // If guessed letter is found elsewhere in target
+                        feedback[i] = 'yellow';
+                        targetLetters[targetIndex] = null; // Mark this instance of target letter as used
+
+                        // If guess[i] is yellow at this position, it means target[i] is NOT guess[i].
+                        // So, remove guess[i] from newPotentialsCopy[i] if it's not collapsed.
+                        if (newPotentialsCopy[i].length > 1) { // Only if not already collapsed
+                            const idxInPotential = newPotentialsCopy[i].indexOf(guessLetters[i]);
+                            if (idxInPotential > -1) {
+                                newPotentialsCopy[i].splice(idxInPotential, 1);
+                            }
+                        }
+                        guessLetters[i] = '$'; // Mark guess letter as processed for yellow
+                    }
+                }
+            }
+            
+            // Third pass: Update potentials based on grey letters from the guess
+            // A grey letter in the guess is definitively NOT in the target word.
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                const originalGuessedLetter = guess.split('')[i];
+                if (feedback[i] === 'grey') { 
+                    // This originalGuessedLetter is NOT in the target word. Remove it from ALL potential lists.
+                    for (let j = 0; j < WORD_LENGTH; j++) {
+                        if (newPotentialsCopy[j].length > 1) { // Only if not already collapsed
+                            const idxInPotential = newPotentialsCopy[j].indexOf(originalGuessedLetter);
+                            if (idxInPotential > -1) {
+                                newPotentialsCopy[j].splice(idxInPotential, 1);
+                            }
+                        }
+                    }
+                }
+            }
+            return { feedback, newPotentials: newPotentialsCopy };
+        }
+
+        function checkWinLoss(guessedWord, feedback) {
+            if (feedback.every(f => f === 'green')) {
+                isGameOver = true;
+                showToast("Congratulations! You solved it!", 5000);
+                const currentRowTiles = guessGridElement.children[currentRow].children;
+                for (let i = 0; i < currentRowTiles.length; i++) {
+                    setTimeout(() => currentRowTiles[i].classList.add('pop'), i * 100);
+                }
+                return; // Exit early if direct win
+            }
+            
+            // Check if all potentials have collapsed to the correct word (Quantum Win)
+            let allPotentialsCorrectlyCollapsed = true;
+            for(let i=0; i<WORD_LENGTH; i++) {
+                if(!(globalPotentials[i].length === 1 && globalPotentials[i][0] === targetWord[i])) {
+                    allPotentialsCorrectlyCollapsed = false;
+                    break;
+                }
+            }
+            if (allPotentialsCorrectlyCollapsed) {
+                isGameOver = true;
+                // Highlight the potential tiles to show the win
+                potentialStateDisplayElement.childNodes.forEach((tile, index) => {
+                    if (globalPotentials[index][0] === targetWord[index]) {
+                        tile.classList.add('green'); // Use existing green style for emphasis
+                    }
+                });
+                showToast(`Quantum Collapse! The word was ${targetWord}. You got it!`, 5000);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return; 
+            if (isGameOver && e.key !== 'Enter' && e.key !== 'Backspace') return; // Allow New Game via Enter maybe?
+            
+            if (e.key === 'Enter') {
+                if (isGameOver) { // Allow Enter on New Game button if focused, or trigger new game
+                    // newGameButton.click(); // Or could directly call initializeGame()
+                } else {
+                    handleKeyPress('ENTER');
+                }
+            } else if (e.key === 'Backspace') {
+                handleKeyPress('⌫');
+            } else if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
+                handleKeyPress(e.key.toUpperCase());
+            }
+        });
+        
+        newGameButton.addEventListener('click', initializeGame);
+
+        // Initial game setup
+        initializeGame();
+    </script>
+</body>
+</html>
