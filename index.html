@@ -72,7 +72,7 @@
     <div id="potential-state-display" class="flex justify-center mb-3 sm:mb-4"></div>
     <div id="guess-grid" class="grid grid-rows-6 gap-1 mb-4 sm:mb-6"></div>
     <div id="keyboard" class="flex flex-col items-center space-y-1 sm:space-y-2"></div>
-    <button id="newGameButton" class="mt-6 px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 ease-in-out" disabled>New Game</button>
+    <button id="newGameButton" class="mt-6 px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 ease-in-out" style="display: none;>New Game</button>
     <footer class="mt-6 text-center text-gray-600 text-xs">
         <p>Made with ❤️ by <a href="https://github.com/tgjohnst" class="text-xs text-blue-500 hover:underline">tgjohnst</a></p>
         <p>Source Code on <a href="https://github.com/tgjohnst/quantle" class="text-xs text-blue-500 hover:underline">GitHub</a></p>
@@ -200,12 +200,16 @@
             currentCol = 0;
             isGameOver = false;
             keyboardKeyStates = {};
+            
+            // Ensure New Game button is hidden and disabled at the start of a new game
+            newGameButton.style.display = 'none';
+            newGameButton.disabled = true;
 
             renderPotentialStateDisplay();
             renderGuessGrid();
             renderKeyboard(); // Ensure keyboard is rendered and enabled/disabled state is correct
             setKeyboardDisabled(false); // Explicitly enable keyboard for new game
-            newGameButton.disabled = false;
+            //newGameButton.disabled = false;
         }
 
         function renderPotentialStateDisplay() {
@@ -362,13 +366,14 @@
             if (!isGameOver) {
                 currentRow++;
                 currentCol = 0;
-                if (currentRow === MAX_GUESSES) {
+                if (currentRow === MAX_GUESSES) { // Loss Condition
                     isGameOver = true;
                     showToast(`Game Over! The word was ${targetWord}.`, 5000);
-                    newGameButton.disabled = false;
-                    setKeyboardDisabled(true);
                 }
-            } else {
+            }
+            // Show New Game button if game is over (win or loss)
+            if (isGameOver) {
+                 newGameButton.style.display = 'block'; // Or 'inline-block' if you prefer for styling
                  newGameButton.disabled = false;
                  setKeyboardDisabled(true);
             }
