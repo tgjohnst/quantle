@@ -1,5 +1,7 @@
 # **Quantle \- A Quantum Word Game**
 
+Hosted at: [https://tgjohnst.github.io/quantle/](https://tgjohnst.github.io/quantle/)
+
 ## **What is Quantle?**
 
 Quantle is a twist on popular word-guessing games, introducing a "quantum" mechanic. Instead of each letter slot having a single hidden letter, each slot in the 5-letter target word starts in a "superposition" of several potential letters (currently 4 possibilities per slot). Your guesses help "collapse" these possibilities, not just for the slot you guessed, but globally, as information about letters (whether they are in the word, not in the word, or in a specific position) affects all potential states.  
@@ -38,6 +40,9 @@ The goal is to deduce the secret 5-letter word within 6 guesses.
 * Color-coded feedback on guess tiles and keyboard.  
 * Animations for tile flips and letter pops.  
 * Responsive design for play on different screen sizes.
+
+## Screenshot
+![Quantle Screenshot](assets/quantle_screenshot.png)
 
 ## **How to Run**
 
