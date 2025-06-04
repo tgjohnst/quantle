@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale-1.0">
-    <title>Quantum Wordle - JSON Loaded</title>
+    <title>Quantle!</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -65,7 +65,7 @@
     <div id="loading-indicator">Loading Quantum Word Lists...</div>
 
     <header class="mb-4 sm:mb-6 text-center">
-        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">Quantum Wordle</h1>
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">Quantle</h1>
         <p class="text-sm text-gray-600">Uncover the word by collapsing quantum states!</p>
     </header>
 
@@ -75,181 +75,6 @@
     <button id="newGameButton" class="mt-6 px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-150 ease-in-out" disabled>New Game</button>
 
     <script>
-        // --- SIMULATED JSON FILE CONTENT ---
-        // In a real app, you would fetch these from actual .json files.
-        const solutionsJSONString = `
-            ["APPLE", "BEACH", "CHAIR", "DREAM", "EAGLE", "FANCY", "GHOST", "HEART", 
-             "INPUT", "JOLLY", "KNOCK", "LEMON", "MANGO", "NIGHT", "OCEAN", "PAINT", 
-             "QUEEN", "RIVER", "SNAKE", "TABLE", "UNITY", "VOICE", "WATCH", "XENON", 
-             "YACHT", "ZEBRA"]
-        `;
-        const allowedGuessesJSONString = `
-            ["APPLE", "BEACH", "CHAIR", "DREAM", "EAGLE", "FANCY", "GHOST", "HEART", 
-             "INPUT", "JOLLY", "KNOCK", "LEMON", "MANGO", "NIGHT", "OCEAN", "PAINT", 
-             "QUEEN", "RIVER", "SNAKE", "TABLE", "UNITY", "VOICE", "WATCH", "XENON", 
-             "YACHT", "ZEBRA", "ABACK", "ABASE", "ABATE", "ABBEY", "ACUTE", "ADMIT", 
-             "ADOBE", "ADOPT", "ADORE", "ADULT", "AGENT", "AGILE", "AGREE", "AISLE", 
-             "ALBUM", "ALERT", "ALIEN", "ALIGN", "ALIKE", "ALIVE", "ALLOW", "ALONE", 
-             "ALOOF", "ALPHA", "ALTAR", "ALTER", "AMASS", "AMBER", "AMEND", "AMPLE", 
-             "ANGEL", "ANGER", "ANGLE", "ANKLE", "APART", "APPLY", "APRON", "AUDIO", 
-             "AWFUL", "BADGE", "BASIC", "BATON", "BEARD", "BEAST", "BEGAN", "BEING", 
-             "BELOW", "BENCH", "BERRY", "BIRCH", "BIRTH", "BLAME", "BLANK", "BLAZE", 
-             "BLEAK", "BLEND", "BLESS", "BLIND", "BLINK", "BLISS", "BLOCK", "BLOOD", 
-             "BLOOM", "BLOWN", "BLUSH", "BOARD", "BOAST", "BONUS", "BOOST", "BRAID", 
-             "BRAKE", "BRAND", "BRAVE", "BREAD", "BREAK", "BREED", "BRIAR", "BRICK", 
-             "BRIDE", "BRIEF", "BRING", "BRISK", "BROAD", "BROKE", "BROOK", "BROOM", 
-             "BRUSH", "BUILD", "BUILT", "BULKY", "BUNCH", "BURST", "CABIN", "CABLE", 
-             "CAMEL", "CANAL", "CANDY", "CANOE", "CARGO", "CAROL", "CARRY", "CATCH", 
-             "CEDAR", "CHARM", "CHART", "CHEAT", "CHEEK", "CHEER", "CHEST", "CHIEF", 
-             "CHILD", "CHILL", "CHOIR", "CHUNK", "CIVIC", "CIVIL", "CLAIM", "CLAMP", 
-             "CLASH", "CLASS", "CLEAN", "CLEAR", "CLERK", "CLICK", "CLIFF", "CLIMB", 
-             "CLOCK", "CLOSE", "CLOTH", "CLOUD", "CLOWN", "COACH", "COAST", "CORAL", 
-             "COUNT", "COURT", "COVER", "CRACK", "CRAFT", "CRANE", "CRANK", "CRASH", 
-             "CREAM", "CREEK", "CREEP", "CREPT", "CREST", "CRISP", "CROSS", "CROWD", 
-             "CROWN", "CRUMB", "CRUSH", "CRUST", "CURVE", "CYCLE", "DAILY", "DANCE", 
-             "DEALT", "DEATH", "DECAY", "DELAY", "DELTA", "DEPTH", "DEVIL", "DIARY", 
-             "DINER", "DIRTY", "DOZEN", "DRAFT", "DRAIN", "DRAWN", "DRIFT", "DRILL", 
-             "DRINK", "DRIVE", "DROVE", "DROWN", "DRUNK", "DUTCH", "DWARF", "EAGER", 
-             "EARLY", "EARTH", "EIGHT", "ELBOW", "ELDER", "ELECT", "EMPTY", "ENJOY", 
-             "ENTER", "ENTRY", "EPOCH", "EQUAL", "ERROR", "ESSAY", "EVENT", "EVERY", 
-             "EXACT", "EXCEL", "EXIST", "EXTRA", "FACET", "FAINT", "FAIRY", "FAITH", 
-             "FALSE", "FARCE", "FAULT", "FAVOR", "FEAST", "FENCE", "FERRY", "FEVER", 
-             "FIELD", "FIERY", "FIFTH", "FIFTY", "FIGHT", "FILLY", "FINAL", "FIRST", 
-             "FIXER", "FLACK", "FLAIL", "FLAIR", "FLAKE", "FLAME", "FLANK", "FLARE", 
-             "FLASH", "FLASK", "FLECK", "FLEET", "FLESH", "FLICK", "FLIER", "FLING", 
-             "FLINT", "FLIRT", "FLOAT", "FLOCK", "FLOOD", "FLOOR", "FLORA", "FLOSS", 
-             "FLOUR", "FLOWN", "FLUFF", "FLUID", "FLUNG", "FLUSH", "FOAMY", "FOCUS", 
-             "FOGGY", "FORCE", "FORGE", "FORGO", "FORTH", "FORTY", "FORUM", "FOUND", 
-             "FRAME", "FRANK", "FRAUD", "FREAK", "FREED", "FREER", "FRESH", "FRIAR", 
-             "FRIED", "FROCK", "FROND", "FRONT", "FROST", "FROTH", "FROZE", "FRUIT", 
-             "FUNGI", "FUNNY", "GAUZE", "GENRE", "GIANT", "GLASS", "GLAZE", "GLOBE", 
-             "GLOOM", "GLORY", "GLOVE", "GRACE", "GRADE", "GRAIN", "GRAND", "GRANT", 
-             "GRASP", "GRASS", "GRAVE", "GRAVY", "GREAT", "GREET", "GRIEF", "GRILL", 
-             "GRIND", "GRIPE", "GROAN", "GROIN", "GROOM", "GROUP", "GROUT", "GROVE", 
-             "GROWL", "GROWN", "GUARD", "GUESS", "GUEST", "GUIDE", "GUILD", "GUILE", 
-             "GUILT", "GULLY", "HABIT", "HAIRY", "HAPPY", "HARSH", "HASTE", "HAUNT", 
-             "HAVOC", "HAZEL", "HEADY", "HEAVY", "HENCE", "HINGE", "HOBBY", "HOIST", 
-             "HONEY", "HONOR", "HORDE", "HORSE", "HOTEL", "HUMAN", "HUMID", "HUMOR", 
-             "HURRY", "IDEAL", "IMAGE", "IMPLY", "INDEX", "INNER", "IRONY", "ISSUE", 
-             "IVORY", "JAUNT", "JAZZY", "JOINT", "JUDGE", "JUICE", "JUICY", "JUMBO", 
-             "JUROR", "KARMA", "KAYAK", "KEBAB", "KHAKI", "KIOSK", "KNEEL", "KNELT", 
-             "KNIFE", "LABEL", "LABOR", "LARGE", "LASER", "LATCH", "LATER", "LATTE", 
-             "LAUGH", "LAYER", "LEAPT", "LEARN", "LEASE", "LEAST", "LEAVE", "LEDGE", 
-             "LEFTY", "LEGAL", "LEVEL", "LEVER", "LIBEL", "LIEGE", "LILAC", "LIMIT", 
-             "LINEN", "LINER", "LINGO", "LITER", "LITHE", "LIVER", "LIVID", "LLAMA", 
-             "LOCAL", "LOCUS", "LODGE", "LOFTY", "LOGIC", "LOOPY", "LORRY", "LOSER", 
-             "LOUSE", "LOVER", "LOWER", "LOWLY", "LOYAL", "LUCID", "LUCKY", "LUMPY", 
-             "LUNAR", "LUNCH", "LURID", "LUSSH", "LYRIC", "MACAW", "MADAM", "MAGIC", 
-             "MAJOR", "MAKER", "MAPLE", "MARCH", "MARRY", "MARSH", "MASON", "MASSY", 
-             "MATCH", "MAYBE", "MAYOR", "MEALY", "MEANT", "MEATY", "MEDAL", "MEDIA", 
-             "MERGE", "MERIT", "MERRY", "METAL", "METER", "METRO", "MIDST", "MIGHT", 
-             "MINOR", "MINUS", "MODEL", "MOIST", "MOLAR", "MONEY", "MONTH", "MOODY", 
-             "MORAL", "MOTEL", "MOTOR", "MOTTO", "MOUNT", "MOURN", "MOVIE", "MUCKY", 
-             "MUMMY", "MUSIC", "NAIVE", "NANNY", "NASTY", "NAVAL", "NEEDY", "NERVE", 
-             "NEWER", "NICHE", "NIECE", "NINJA", "NINTH", "NOBLE", "NOISE", "NOISY", 
-             "NORTH", "NOTCH", "NOVEL", "NYMPH", "OASIS", "OCCUR", "OFFER", "OFTEN", 
-             "OLDEN", "OLDER", "ONION", "ONSET", "OPERA", "OPTIC", "ORBIT", "ORDER", 
-             "ORGAN", "OTHER", "OUGHT", "OUTDO", "OUTER", "OVERT", "OWNER", "OXIDE", 
-             "OZONE", "PACER", "PADDY", "PAGAN", "PANEL", "PANIC", "PAPER", "PARKA", 
-             "PARTY", "PASTA", "PASTE", "PASTY", "PATCH", "PATIO", "PAUSE", "PEACE", 
-             "PEACH", "PEARL", "PEDAL", "PENAL", "PENNY", "PERCH", "PERIL", "PETAL", 
-             "PETTY", "PHASE", "PHONE", "PHOTO", "PIANO", "PICKY", "PIETY", "PILOT", 
-             "PINCH", "PINEY", "PINKY", "PINTO", "PIPER", "PIQUE", "PITCH", "PIXEL", 
-             "PIZZA", "PLACE", "PLAID", "PLAIN", "PLAIT", "PLANE", "PLANK", "PLANT", 
-             "PLATE", "PLAZA", "PLEAD", "PLEAT", "PLUCK", "PLUMB", "PLUME", "PLUMP", 
-             "PLUSH", "POESY", "POINT", "POISE", "POKER", "POLAR", "POLKA", "POUCH", 
-             "POUND", "POWER", "PRESS", "PRICE", "PRICK", "PRIDE", "PRIME", "PRINT", 
-             "PRIOR", "PRIZE", "PROBE", "PRONE", "PROOF", "PROUD", "PROVE", "PROWL", 
-             "PROXY", "PRUDE", "PRUNE", "PSALM", "PULPY", "PUNCH", "PUPIL", "PUPPY", 
-             "PURGE", "QUACK", "QUAIL", "QUAKE", "QUALM", "QUART", "QUASH", "QUERY", 
-             "QUEST", "QUEUE", "QUICK", "QUIET", "QUILL", "QUIRK", "QUITE", "QUOTA", 
-             "QUOTE", "RABBI", "RADAR", "RADIO", "RAINY", "RAISE", "RALLY", "RAMEN", 
-             "RANCH", "RANDY", "RANGE", "RAPID", "RATIO", "RAVEN", "RAYON", "RAZOR", 
-             "REACH", "REACT", "READY", "REALM", "REBEL", "REBUT", "RECAP", "REGAL", 
-             "REIGN", "RELAX", "RELAY", "RELIC", "RENEW", "REPAY", "REPEL", "REPLY", 
-             "RESET", "RESIN", "RETCH", "RETRY", "REVEL", "REVUE", "RHYME", "RIDER", 
-             "RIFLE", "RIGHT", "RIGID", "RIGOR", "RINSE", "RIPEN", "RISEN", "RISER", 
-             "RISKY", "RIVAL", "ROCKY", "RODEO", "ROGER", "ROOMY", "ROOST", "ROTOR", 
-             "ROUGH", "ROUND", "ROUSE", "ROUTE", "ROVER", "ROYAL", "RUDDY", "RUDER", 
-             "RUGBY", "RULER", "RUMBA", "RUMOR", "RURAL", "RUSTY", "SABLE", "SADLY", 
-             "SAFER", "SAINT", "SALAD", "SALON", "SALSA", "SALTY", "SALVE", "SALVO", 
-             "SANDY", "SATIN", "SAUTE", "SAVOR", "SCALD", "SCALE", "SCALP", "SCALY", 
-             "SCAMP", "SCANT", "SCARE", "SCARF", "SCARY", "SCENE", "SCENT", "SCOLD", 
-             "SCOPE", "SCORE", "SCORN", "SCOUR", "SCOUT", "SCOWL", "SCRAM", "SCRAP", 
-             "SCREE", "SCREW", "SCRUB", "SCUBA", "SCUFF", "SEDAN", "SEEDY", "SEIZE", 
-             "SENSE", "SERUM", "SERVE", "SETUP", "SEVEN", "SEVER", "SEWER", "SHACK", 
-             "SHADE", "SHADY", "SHAFT", "SHAKE", "SHAKY", "SHALE", "SHALL", "SHAME", 
-             "SHANK", "SHAPE", "SHARE", "SHARK", "SHARP", "SHAVE", "SHAWL", "SHEAR", 
-             "SHEEN", "SHEEP", "SHEER", "SHEET", "SHEIK", "SHELF", "SHELL", "SHIFT", 
-             "SHINE", "SHINY", "SHIRE", "SHIRK", "SHIRT", "SHOCK", "SHONE", "SHOOK", 
-             "SHOOT", "SHORE", "SHORN", "SHORT", "SHOUT", "SHOVE", "SHOWN", "SHOWY", 
-             "SHRED", "SHREW", "SHRUB", "SHRUG", "SHUCK", "SHUNT", "SHUSH", "SHYLY", 
-             "SIEGE", "SIGHT", "SIGMA", "SILKY", "SILLY", "SINCE", "SINEW", "SINGE", 
-             "SIREN", "SIXTH", "SIXTY", "SKATE", "SKEPT", "SKIER", "SKIFF", "SKILL", 
-             "SKIMP", "SKIRT", "SKULK", "SKULL", "SKUNK", "SLACK", "SLAIN", "SLANG", 
-             "SLANT", "SLASH", "SLATE", "SLAVE", "SLEEK", "SLEEP", "SLEET", "SLEPT", 
-             "SLICE", "SLICK", "SLIDE", "SLIME", "SLIMY", "SLING", "SLINK", "SLOPE", 
-             "SLOSH", "SLOTH", "SLUMP", "SLUNG", "SLUNK", "SLURP", "SLUSH", "SMALL", 
-             "SMART", "SMASH", "SMEAR", "SMELL", "SMELT", "SMILE", "SMIRK", "SMITE", 
-             "SMITH", "SMOCK", "SMOKE", "SMOKY", "SMOTE", "SNACK", "SNAIL", "SNARE", 
-             "SNARL", "SNEAK", "SNEER", "SNIDE", "SNIFF", "SNIPE", "SNOOP", "SNORE", 
-             "SNORT", "SNOUT", "SNOWY", "SNUCK", "SNUFF", "SOAPY", "SOBER", "SOLAR", 
-             "SOLID", "SOLVE", "SONAR", "SONIC", "SOOTH", "SOOTY", "SORRY", "SOUND", 
-             "SOUTH", "SOWER", "SPACE", "SPADE", "SPANK", "SPARE", "SPARK", "SPASM", 
-             "SPATE", "SPAWN", "SPEAK", "SPEAR", "SPECK", "SPEED", "SPELL", "SPELT", 
-             "SPEND", "SPENT", "SPICE", "SPICY", "SPIED", "SPIEL", "SPIKE", "SPIKY", 
-             "SPILL", "SPILT", "SPINE", "SPINY", "SPIRE", "SPITE", "SPLASH", "SPLAT", 
-             "SPLIT", "SPOIL", "SPOKE", "SPOOF", "SPOOK", "SPOOL", "SPOON", "SPORE", 
-             "SPORT", "SPOTS", "SPOUT", "SPRAY", "SPREE", "SPRIG", "SPUNK", "SPURN", 
-             "SPURT", "SQUAD", "SQUAT", "SQUIB", "STACK", "STAFF", "STAGE", "STAID", 
-             "STAIN", "STAIR", "STAKE", "STALE", "STALK", "STALL", "STAMP", "STAND", 
-             "STANK", "STARE", "STARK", "START", "STATE", "STAVE", "STEAD", "STEAK", 
-             "STEAL", "STEAM", "STEED", "STEEL", "STEEP", "STEER", "STEIN", "STERN", 
-             "STICK", "STIFF", "STILL", "STILT", "STING", "STINK", "STINT", "STIRP", 
-             "STOCK", "STOIC", "STOKE", "STOLE", "STOMP", "STONE", "STONY", "STOOD", 
-             "STOOL", "STOOP", "STORE", "STORK", "STORM", "STORY", "STOUT", "STOVE", 
-             "STRAP", "STRAW", "STRAY", "STREP", "STRIP", "STRUT", "STUCK", "STUDY", 
-             "STUFF", "STUMP", "STUNG", "STUNK", "STYLE", "SUAVE", "SUGAR", "SUING", 
-             "SUITE", "SULKY", "SUNNY", "SUPER", "SURER", "SURGE", "SWAMI", "SWAMP", 
-             "SWARM", "SWASH", "SWATH", "SWEAR", "SWEAT", "SWEEP", "SWEET", "SWELL", 
-             "SWEPT", "SWIFT", "SWILL", "SWINE", "SWING", "SWIRL", "SWISH", "SWOON", 
-             "SWOOP", "SWORD", "SWORE", "SWORN", "SWUNG", "SYNOD", "SYRUP", "TAFFY", 
-             "TAKEN", "TALON", "TAMER", "TANGO", "TANGY", "TAPER", "TAPIR", "TARDY", 
-             "TAROT", "TASTE", "TASTY", "TAUNT", "TAWNY", "TEACH", "TEARY", "TEASE", 
-             "TEMPO", "TENSE", "TENTH", "TEPEE", "TEPID", "TERSE", "THANK", "THEFT", 
-             "THEIR", "THEME", "THERE", "THESE", "THICK", "THIEF", "THIGH", "THING", 
-             "THINK", "THIRD", "THORN", "THOSE", "THREE", "THROW", "THRUM", "THUMB", 
-             "THUMP", "THYME", "TIDAL", "TIDDY", "TIGER", "TIGHT", "TILDE", "TIMER", 
-             "TIMID", "TINGE", "TINNY", "TIPSY", "TITAN", "TITLE", "TOAST", "TODAY", 
-             "TOKEN", "TONAL", "TONGA", "TONIC", "TOPAZ", "TOPIC", "TORCH", "TORSO", 
-             "TORUS", "TOTAL", "TOUCH", "TOUGH", "TOWEL", "TOWER", "TOXIC", "TOXIN", 
-             "TRACE", "TRACK", "TRACT", "TRADE", "TRAIL", "TRAIN", "TRAIT", "TRASH", 
-             "TRAWL", "TREAD", "TREAT", "TREND", "TRIAD", "TRIAL", "TRIBE", "TRICE", 
-             "TRICK", "TRIED", "TRIPE", "TRITE", "TROLL", "TROOP", "TROPE", "TROUT", 
-             "TROVE", "TRUCE", "TRUCK", "TRUER", "TRULY", "TRUMP", "TRUNK", "TRUSS", 
-             "TRUST", "TRUTH", "TRYST", "TUBAL", "TUBER", "TULIP", "TULLE", "TUMOR", 
-             "TUNIC", "TURBO", "TUTOR", "TWANG", "TWEAK", "TWEED", "TWEET", "TWICE", 
-             "TWINE", "TWIRL", "TWIST", "TYING", "ULCER", "ULTRA", "UMBRA", "UNDER", 
-             "UNDUE", "UNFED", "UNFIT", "UNIFY", "UNION", "UNITE", "UNLIT", "UNMET", 
-             "UNTIE", "UNTIL", "UNWED", "UNZIP", "UPPER", "UPSET", "URBAN", "USAGE", 
-             "USHER", "USING", "USUAL", "USURP", "UTTER", "VACUO", "VAGUE", "VALET", 
-             "VALID", "VALOR", "VALUE", "VALVE", "VAPID", "VAPOR", "VAULT", "VAUNT", 
-             "VEGAN", "VENOM", "VENUE", "VERGE", "VERSE", "VERSO", "VERVE", "VICAR", 
-             "VIDEO", "VIGOR", "VILLA", "VINYL", "VIPER", "VIRAL", "VISIT", "VISOR", 
-             "VISTA", "VITAL", "VIVID", "VIXEN", "VOCAL", "VODKA", "VOGUE", "VALID", 
-             "WACKY", "WADER", "WAGER", "WAGON", "WAIST", "WAIVE", "WAKEN", "WALTZ", 
-             "WASTE", "WATER", "WAVER", "WAXEN", "WEARY", "WEAVE", "WEDGE", "WEEDY", 
-             "WEIGH", "WEIRD", "WELCH", "WELSH", "WHACK", "WHARF", "WHEAT", "WHEEL", 
-             "WHELP", "WHERE", "WHICH", "WHIFF", "WHILE", "WHINE", "WHINY", "WHIRL", 
-             "WHISK", "WHITE", "WHOLE", "WHOOP", "WHOSE", "WIDEN", "WIDER", "WIDOW", 
-             "WIDTH", "WIELD", "WIGHT", "WILLY", "WIMPY", "WINCE", "WINCH", "WINDY", 
-             "WIPER", "WISDM", "WISER", "WISPY", "WITCH", "WITTY", "WOMAN", "WOMEN", 
-             "WORLD", "WORRY", "WORSE", "WORST", "WORTH", "WOULD", "WOUND", "WOVEN", 
-             "WRACK", "WRATH", "WREAK", "WRECK", "WREST", "WRING", "WRIST", "WRITE", 
-             "WRONG", "WROTE", "WRUNG", "WRYLY", "YEARN", "YIELD", "YODEL", "YOKEL", 
-             "YOUNG", "YOUTH", "ZESTY"]
-        `;
-        // --- END SIMULATED JSON ---
 
         const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
         const WORD_LENGTH = 5;
@@ -290,15 +115,28 @@
             newGameButton.disabled = true;
             setKeyboardDisabled(true);
 
-            // Simulate fetching and parsing JSON files
-            // In a real app, use actual fetch() calls here
-            await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-
+            // Use Fetch to load valid_words.json and all_words.json
+            let solutionsJSONString, allowedGuessesJSONString;
             try {
-                solutionWords = JSON.parse(solutionsJSONString);
-                const allowedGuessesArray = JSON.parse(allowedGuessesJSONString);
-                allowedGuessWordsSet = new Set(allowedGuessesArray.map(word => word.toUpperCase()));
-
+                const solutionsResponse = await fetch('valid_words.json');
+                if (!solutionsResponse.ok) throw new Error("Failed to load valid_words.json");
+                solutionsJSON = await solutionsResponse.json();  
+                const allowedGuessesResponse = await fetch('all_words.json');
+                if (!allowedGuessesResponse.ok) throw new Error("Failed to load all_words.json");
+                allowedGuessesJSON = await allowedGuessesResponse.json();
+            } catch (error) {
+                console.error("Error fetching word lists:", error);
+                showToast("Error: Could not fetch word lists. Please refresh.", 10000);
+                loadingIndicator.textContent = "Error loading game data!";
+                // Game cannot start, so we don't enable buttons or call initializeGame
+                return;
+            }
+            // Parse the JSON strings into arrays
+            
+            try {
+                solutionWords = solutionsJSON['words'];
+                allowedGuessWordsSet = new Set(allowedGuessesJSON['words'].map(word => word.toUpperCase()));
+                console.log(solutionWords.length, allowedGuessWordsSet.size)
                 if (!solutionWords.length || !allowedGuessWordsSet.size) {
                     throw new Error("Word lists are empty or failed to load.");
                 }
@@ -627,4 +465,7 @@
         setupGameEnvironment();
     </script>
 </body>
+<footer class="mt-6 text-center text-gray-600 text-sm">
+        <p>Made with ❤️ by <a href="https://github.com/tgjohnst" class="text-blue-500 hover:underline">tgjohnst</a></p>
+</footer>   
 </html>
